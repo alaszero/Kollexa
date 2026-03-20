@@ -53,7 +53,7 @@ def api_auth_required(f):
         user_id = get_jwt_identity()
         from app.models.user import User
         from app.extensions import db
-        user = db.session.get(User, user_id)
+        user = db.session.get(User, int(user_id))
         if not user or not user.is_active:
             return jsonify({'error': 'Usuario no válido o inactivo'}), 401
         kwargs['current_api_user'] = user

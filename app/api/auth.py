@@ -24,7 +24,7 @@ def api_login():
     if not user:
         return jsonify({'error': 'Credenciales inválidas'}), 401
 
-    token = create_access_token(identity=user.id)
+    token = create_access_token(identity=str(user.id))
     log_action('auth.login', entity_type='user', entity_id=user.id, user_id=user.id)
     db.session.commit()
 
@@ -41,7 +41,7 @@ def api_login():
 def api_me():
     user_id = get_jwt_identity()
     from app.models.user import User
-    user = db.session.get(User, user_id)
+    user = db.session.get(User, int(user_id))
     if not user or not user.is_active:
         return jsonify({'error': 'Usuario no encontrado'}), 404
 

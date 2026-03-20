@@ -38,10 +38,23 @@
     <nav class="bg-primary-700 text-white shadow-lg" x-data="{ mobileOpen: false }">
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between h-16">
-                <div class="flex items-center">
+                <div class="flex items-center space-x-6">
                     <a href="{{ url_for('web.dashboard') }}" class="text-xl font-bold tracking-wide">
                         Kollexa
                     </a>
+                    <!-- Links principales desktop -->
+                    <div class="hidden md:flex items-center space-x-1">
+                        <a href="{{ url_for('web.dashboard') }}"
+                           class="px-3 py-2 rounded-lg text-sm hover:bg-primary-600 transition">Inicio</a>
+                        {% if current_user.has_permission('products.view') or current_user.has_role('superadmin') %}
+                        <a href="{{ url_for('products.index') }}"
+                           class="px-3 py-2 rounded-lg text-sm hover:bg-primary-600 transition">Productos</a>
+                        {% endif %}
+                        {% if current_user.has_permission('inventory.view') or current_user.has_role('superadmin') %}
+                        <a href="{{ url_for('inventory.index') }}"
+                           class="px-3 py-2 rounded-lg text-sm hover:bg-primary-600 transition">Inventario</a>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <!-- Menu desktop -->
@@ -70,7 +83,18 @@
         <!-- Menu mobile -->
         <div x-show="mobileOpen" x-cloak class="md:hidden bg-primary-800 px-4 pb-4">
             <div class="pt-2 pb-3 space-y-2">
-                <p class="text-primary-200 text-sm px-3 py-2">{{ current_user.full_name }}</p>
+                <a href="{{ url_for('web.dashboard') }}"
+                   class="block px-3 py-2 rounded hover:bg-primary-900 text-sm">Inicio</a>
+                {% if current_user.has_permission('products.view') or current_user.has_role('superadmin') %}
+                <a href="{{ url_for('products.index') }}"
+                   class="block px-3 py-2 rounded hover:bg-primary-900 text-sm">Productos</a>
+                {% endif %}
+                {% if current_user.has_permission('inventory.view') or current_user.has_role('superadmin') %}
+                <a href="{{ url_for('inventory.index') }}"
+                   class="block px-3 py-2 rounded hover:bg-primary-900 text-sm">Inventario</a>
+                {% endif %}
+                <hr class="border-primary-600 my-2">
+                <p class="text-primary-200 text-sm px-3 py-1">{{ current_user.full_name }}</p>
                 <a href="{{ url_for('web_auth.logout') }}"
                    class="block px-3 py-2 rounded bg-primary-900 hover:bg-primary-950 text-sm">
                     Cerrar Sesión

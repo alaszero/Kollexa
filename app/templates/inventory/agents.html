@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Stock por Agente - Kollexa{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-2xl font-bold text-gray-800">Stock por Agente</h1>
+
+    <!-- Navegación inventario -->
+    <div class="flex gap-2">
+        <a href="{{ url_for('inventory.index') }}"
+           class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition">
+            Almacén
+        </a>
+        <a href="{{ url_for('inventory.agents_stock') }}"
+           class="bg-primary-100 text-primary-800 px-4 py-2 rounded-lg font-medium">
+            Stock Agentes
+        </a>
+        <a href="{{ url_for('inventory.movements') }}"
+           class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition">
+            Movimientos
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for agent in agents %}
+        <a href="{{ url_for('inventory.agent_detail', user_id=agent.id) }}"
+           class="bg-white rounded-xl shadow p-5 hover:shadow-md transition block">
+            <div class="flex justify-between items-center">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-primary-100 text-primary-700 rounded-full
+                                    flex items-center justify-center font-bold text-lg">
+                            {{ agent.full_name[0] }}
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-800">{{ agent.full_name }}</h3>
+                            <p class="text-sm text-gray-500">{{ agent.product_count }} productos distintos</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-3xl font-bold text-primary-700">{{ agent.total_items }}</p>
+                    <p class="text-xs text-gray-400">piezas total</p>
+                </div>
+            </div>
+        </a>
+        {% else %}
+        <div class="col-span-full bg-white rounded-xl shadow p-8 text-center text-gray-500">
+            <p class="text-lg">Ningún agente tiene stock asignado.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
