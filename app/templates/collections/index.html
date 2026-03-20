@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Cobranza - Kollexa{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 class="text-2xl font-bold text-gray-800">Cobranza</h1>
+        <a href="{{ url_for('collections.history') }}"
+           class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-3 rounded-xl font-semibold transition text-center">
+            Historial
+        </a>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase">Cobrado Hoy</p>
+            <p class="text-2xl font-bold text-green-600">${{ "%.2f"|format(stats.collected_today) }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase">Vencen Hoy</p>
+            <p class="text-2xl font-bold text-blue-600">{{ stats.due_today }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase">Atrasadas</p>
+            <p class="text-2xl font-bold text-red-600">{{ stats.overdue_count }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-4 text-center">
+            <p class="text-xs text-gray-400 uppercase">Total Pendiente</p>
+            <p class="text-2xl font-bold text-yellow-600">${{ "%.2f"|format(stats.pending_total) }}</p>
+        </div>
+    </div>
+
+    <!-- Agenda: cuotas a cobrar hoy o atrasadas -->
+    <h2 class="text-xl font-bold text-gray-700">Por Cobrar</h2>
+
+    {% if agenda %}
+    <div class="space-y-3">
+        {% for item in agenda %}
+        {% set inst = item.installment %}
+        {% set customer = item.customer %}
+        <div class="bg-white rounded-xl shadow p-5">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <!-- Indicador de urgencia -->
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0
+                        {% if item.days_overdue > 7 %}bg-red-500
+                        {% elif item.days_overdue > 0 %}bg-yellow-500
+                        {% else %}bg-blue-500{% endif %}">
+                        {% if item.days_overdue > 0 %}
+                        {{ item.days_overdue }}d
+                        {% else %}
+                        Hoy
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg text-gray-800">{{ customer.full_name }}</h3>
+                        <p class="text-sm text-gray-500">
+                            Cuota {{ inst.installment_num }}/{{ item.plan.num_installments }}
+                            &middot; Venta #{{ item.sale.id }}
+                            &middot; {{ inst.due_date.strftime('%d/%m/%Y') }}
+                        </p>
+                        {% if customer.address %}
+                        <p class="text-xs text-gray-400 mt-1">{{ customer.address }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="text-right">
+                        <p class="text-2xl font-bold text-gray-800">${{ "%.2f"|format(item.owed) }}</p>
+                        {% if inst.penalty_amount > 0 %}
+                        <p class="text-xs text-red-600">+${{ "%.2f"|format(inst.penalty_amount) }} penalización</p>
+                        {% endif %}
+                        {% if inst.paid_amount > 0 %}
+                        <p class="text-xs text-green-600">Abonado: ${{ "%.2f"|format(inst.paid_amount) }}</p>
+                        {% endif %}
+                    </div>
+                    <a href="{{ url_for('collections.pay', installment_id=inst.id) }}"
+                       class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl
+                              font-semibold transition active:scale-[0.98] whitespace-nowrap">
+                        Cobrar
+                    </a>
+                </div>
+            </div>
+            {% if customer.phone %}
+            <div class="mt-3 flex gap-2">
+                <a href="tel:{{ customer.phone }}"
+                   class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg transition">
+                    Llamar: {{ customer.phone }}
+                </a>
+                <a href="{{ url_for('collections.sale_payments', sale_id=item.sale.id) }}"
+                   class="text-sm bg-primary-50 hover:bg-primary-100 text-primary-700 px-3 py-1.5 rounded-lg transition">
+                    Ver pagos
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-xl shadow p-8 text-center">
+        <div class="text-5xl mb-4">&#10003;</div>
+        <p class="text-lg text-gray-600 font-medium">No hay cuotas pendientes de cobro.</p>
+        <p class="text-sm text-gray-400 mt-1">Todas las cuotas al día están cubiertas.</p>
+    </div>
+    {% endif %}
+
+    <!-- Próximas cuotas -->
+    {% if upcoming %}
+    <h2 class="text-xl font-bold text-gray-700 mt-8">Próximos 7 días</h2>
+    <div class="space-y-2">
+        {% for inst in upcoming %}
+        <div class="bg-white rounded-xl shadow p-4 flex justify-between items-center">
+            <div>
+                <p class="font-medium text-gray-800">
+                    {{ inst.plan.sale.customer.full_name }}
+                </p>
+                <p class="text-sm text-gray-500">
+                    Cuota {{ inst.installment_num }} &middot; {{ inst.due_date.strftime('%d/%m/%Y') }}
+                </p>
+            </div>
+            <p class="text-lg font-bold text-gray-700">${{ "%.2f"|format(inst.expected_amount) }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

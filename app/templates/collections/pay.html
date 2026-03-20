@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Cobrar - {{ customer.full_name }} - Kollexa{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div class="flex items-center gap-4">
+        <a href="{{ url_for('collections.index') }}"
+           class="bg-gray-200 hover:bg-gray-300 p-3 rounded-xl transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Registrar Pago</h1>
+            <p class="text-sm text-gray-500">{{ customer.full_name }}</p>
+        </div>
+    </div>
+
+    <!-- Info de la cuota -->
+    <div class="bg-white rounded-xl shadow p-6">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <p class="text-xs text-gray-400 uppercase">Venta</p>
+                <p class="font-medium">#{{ sale.id }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-gray-400 uppercase">Cuota</p>
+                <p class="font-medium">{{ installment.installment_num }} de {{ plan.num_installments }}</p>
+            </div>
+            <div>
+                <p class="text-xs text-gray-400 uppercase">Fecha de Vencimiento</p>
+                <p class="font-medium
+                    {% if installment.status == 'overdue' %}text-red-600
+                    {% elif installment.status == 'grace' %}text-yellow-600
+                    {% endif %}">
+                    {{ installment.due_date.strftime('%d/%m/%Y') }}
+                    {% if installment.status == 'overdue' %} (Atrasada){% endif %}
+                    {% if installment.status == 'grace' %} (En gracia){% endif %}
+                </p>
+            </div>
+            <div>
+                <p class="text-xs text-gray-400 uppercase">Monto esperado</p>
+                <p class="font-medium">${{ "%.2f"|format(installment.expected_amount) }}</p>
+            </div>
+        </div>
+
+        {% if installment.penalty_amount > 0 %}
+        <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
+            <p class="text-sm text-red-700">
+                Penalización por atraso: <strong>${{ "%.2f"|format(installment.penalty_amount) }}</strong>
+            </p>
+        </div>
+        {% endif %}
+
+        {% if installment.paid_amount > 0 %}
+        <div class="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
+            <p class="text-sm text-green-700">
+                Ya abonado: <strong>${{ "%.2f"|format(installment.paid_amount) }}</strong>
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Total a cobrar -->
+        <div class="bg-primary-50 border border-primary-200 rounded-xl p-4 text-center mb-6">
+            <p class="text-sm text-primary-600">Saldo de esta cuota</p>
+            <p class="text-4xl font-bold text-primary-700">${{ "%.2f"|format(owed) }}</p>
+        </div>
+
+        <!-- Formulario de pago -->
+        <form method="POST" class="space-y-5" x-data="{ amount: {{ owed }} }">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            <div>
+                <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">
+                    Monto recibido *
+                </label>
+                <div class="relative">
+                    <span class="absolute left-4 top-3.5 text-gray-400 text-xl">$</span>
+                    <input type="number" id="amount" name="amount" required
+                           step="0.01" min="0.01"
+                           x-model="amount"
+                           class="w-full pl-10 pr-4 py-4 border border-gray-300 rounded-xl text-2xl
+                                  focus:ring-2 focus:ring-green-500 focus:border-green-500 text-center">
+                </div>
+            </div>
+
+            <!-- Botones rápidos -->
+            <div class="flex flex-wrap gap-2">
+                <button type="button" @click="amount = {{ owed }}"
+                        class="bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-medium transition">
+                    Cuota completa (${{ "%.2f"|format(owed) }})
+                </button>
+                {% if plan.installment_amount != owed %}
+                <button type="button" @click="amount = {{ plan.installment_amount }}"
+                        class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl text-sm font-medium transition">
+                    Cuota base (${{ "%.2f"|format(plan.installment_amount) }})
+                </button>
+                {% endif %}
+                <button type="button" @click="amount = Math.round(amount / 2 * 100) / 100"
+                        class="bg-gray-50 hover:bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium transition">
+                    Mitad
+                </button>
+            </div>
+
+            <div x-show="amount > {{ owed }}" x-cloak
+                 class="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-700">
+                El excedente de <strong>$<span x-text="(amount - {{ owed }}).toFixed(2)"></span></strong>
+                se aplicará a las siguientes cuotas.
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Método de pago</label>
+                <div class="flex gap-3">
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="payment_method" value="cash" checked class="peer hidden">
+                        <div class="text-center py-3 rounded-xl border-2 border-gray-200
+                                    peer-checked:border-green-500 peer-checked:bg-green-50
+                                    transition font-medium">
+                            Efectivo
+                        </div>
+                    </label>
+                    <label class="flex-1 cursor-pointer">
+                        <input type="radio" name="payment_method" value="transfer" class="peer hidden">
+                        <div class="text-center py-3 rounded-xl border-2 border-gray-200
+                                    peer-checked:border-green-500 peer-checked:bg-green-50
+                                    transition font-medium">
+                            Transferencia
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">
+                    Notas <span class="text-gray-400">(opcional)</span>
+                </label>
+                <textarea id="notes" name="notes" rows="2"
+                          placeholder="Observaciones del cobro..."
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
+                                 focus:ring-2 focus:ring-green-500 focus:border-green-500"></textarea>
+            </div>
+
+            <button type="submit"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white
+                           font-semibold py-4 rounded-xl text-xl transition active:scale-[0.98]
+                           shadow-lg">
+                Confirmar Pago
+            </button>
+        </form>
+    </div>
+
+    <!-- Info del cliente -->
+    <div class="bg-white rounded-xl shadow p-5">
+        <h3 class="text-sm font-medium text-gray-400 uppercase mb-2">Datos del Cliente</h3>
+        {% if customer.phone %}
+        <p class="text-gray-700">
+            Tel: <a href="tel:{{ customer.phone }}" class="text-primary-600 hover:underline">{{ customer.phone }}</a>
+        </p>
+        {% endif %}
+        {% if customer.address %}
+        <p class="text-gray-700 mt-1">{{ customer.address }}</p>
+        {% endif %}
+        {% if customer.reference %}
+        <p class="text-gray-500 text-sm mt-1">Ref: {{ customer.reference }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

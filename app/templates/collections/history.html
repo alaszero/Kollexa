@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Historial de Cobros - Kollexa{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center gap-4">
+        <a href="{{ url_for('collections.index') }}"
+           class="bg-gray-200 hover:bg-gray-300 p-3 rounded-xl transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <h1 class="text-2xl font-bold text-gray-800">Historial de Cobros</h1>
+    </div>
+
+    <div class="space-y-3">
+        {% for p in payments %}
+        <div class="bg-white rounded-xl shadow p-4">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="font-semibold text-lg text-green-700">${{ "%.2f"|format(p.amount) }}</p>
+                    <p class="text-sm text-gray-500">
+                        Cuota #{{ p.installment.installment_num }}
+                        &middot; Venta #{{ p.installment.plan.sale_id }}
+                        &middot; {{ p.installment.plan.sale.customer.full_name }}
+                    </p>
+                    <p class="text-xs text-gray-400 mt-1">
+                        {{ p.created_at.strftime('%d/%m/%Y %H:%M') if p.created_at else '' }}
+                        &middot; {{ p.payment_method | capitalize }}
+                        {% if p.collector %} &middot; {{ p.collector.full_name }}{% endif %}
+                    </p>
+                </div>
+                <a href="{{ url_for('collections.sale_payments', sale_id=p.installment.plan.sale_id) }}"
+                   class="text-sm bg-primary-50 hover:bg-primary-100 text-primary-700 px-3 py-1.5 rounded-lg transition">
+                    Ver venta
+                </a>
+            </div>
+            {% if p.notes %}
+            <p class="text-sm text-gray-500 mt-2 bg-gray-50 rounded-lg px-3 py-2">{{ p.notes }}</p>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="bg-white rounded-xl shadow p-8 text-center text-gray-500">
+            <p class="text-lg">No hay cobros registrados.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
