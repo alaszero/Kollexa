@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Kollexa{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+        <span class="text-sm text-gray-500">v{{ config.VERSION }}</span>
+    </div>
+
+    <!-- KPIs placeholder -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow p-6">
+            <p class="text-sm text-gray-500">Ventas Activas</p>
+            <p class="text-3xl font-bold text-primary-700 mt-2">--</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <p class="text-sm text-gray-500">Cobrado Hoy</p>
+            <p class="text-3xl font-bold text-green-600 mt-2">--</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <p class="text-sm text-gray-500">Pendiente</p>
+            <p class="text-3xl font-bold text-yellow-600 mt-2">--</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-6">
+            <p class="text-sm text-gray-500">Atrasado</p>
+            <p class="text-3xl font-bold text-red-600 mt-2">--</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-700 mb-4">Bienvenido, {{ current_user.full_name }}</h2>
+        <p class="text-gray-500">
+            El sistema está funcionando correctamente. Los módulos se irán habilitando progresivamente.
+        </p>
+        <div class="mt-4 flex flex-wrap gap-2">
+            {% for role in current_user.roles %}
+            <span class="inline-block bg-primary-100 text-primary-800 text-sm px-3 py-1 rounded-full">
+                {{ role.name | capitalize }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
