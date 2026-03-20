@@ -54,6 +54,14 @@
                         <a href="{{ url_for('inventory.index') }}"
                            class="px-3 py-2 rounded-lg text-sm hover:bg-primary-600 transition">Inventario</a>
                         {% endif %}
+                        {% if current_user.has_permission('customers.view') or current_user.has_role('superadmin') %}
+                        <a href="{{ url_for('customers.index') }}"
+                           class="px-3 py-2 rounded-lg text-sm hover:bg-primary-600 transition">Clientes</a>
+                        {% endif %}
+                        {% if current_user.has_permission('sales.view') or current_user.has_role('superadmin') %}
+                        <a href="{{ url_for('sales.index') }}"
+                           class="px-3 py-2 rounded-lg text-sm hover:bg-primary-600 transition">Ventas</a>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -92,6 +100,14 @@
                 {% if current_user.has_permission('inventory.view') or current_user.has_role('superadmin') %}
                 <a href="{{ url_for('inventory.index') }}"
                    class="block px-3 py-2 rounded hover:bg-primary-900 text-sm">Inventario</a>
+                {% endif %}
+                {% if current_user.has_permission('customers.view') or current_user.has_role('superadmin') %}
+                <a href="{{ url_for('customers.index') }}"
+                   class="block px-3 py-2 rounded hover:bg-primary-900 text-sm">Clientes</a>
+                {% endif %}
+                {% if current_user.has_permission('sales.view') or current_user.has_role('superadmin') %}
+                <a href="{{ url_for('sales.index') }}"
+                   class="block px-3 py-2 rounded hover:bg-primary-900 text-sm">Ventas</a>
                 {% endif %}
                 <hr class="border-primary-600 my-2">
                 <p class="text-primary-200 text-sm px-3 py-1">{{ current_user.full_name }}</p>

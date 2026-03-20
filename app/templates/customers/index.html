@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Clientes - Kollexa{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 class="text-2xl font-bold text-gray-800">Clientes</h1>
+        {% if current_user.has_permission('customers.create') or current_user.has_role('superadmin') %}
+        <a href="{{ url_for('customers.create') }}"
+           class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl text-center
+                  font-semibold transition active:scale-[0.98]">
+            + Nuevo Cliente
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-xl shadow p-4">
+        <form method="GET" class="flex flex-col sm:flex-row gap-3">
+            <input type="text" name="search" value="{{ search }}"
+                   placeholder="Buscar por nombre, teléfono, dirección..."
+                   class="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-lg
+                          focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            <select name="neighborhood"
+                    class="px-4 py-3 border border-gray-300 rounded-xl text-lg bg-white
+                           focus:ring-2 focus:ring-primary-500">
+                <option value="">Todas las colonias</option>
+                {% for n in neighborhoods %}
+                <option value="{{ n }}" {% if n == current_neighborhood %}selected{% endif %}>{{ n }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit"
+                    class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-xl font-semibold transition">
+                Buscar
+            </button>
+        </form>
+    </div>
+
+    <!-- Lista -->
+    <div class="space-y-3">
+        {% for customer in customers %}
+        <a href="{{ url_for('customers.detail', customer_id=customer.id) }}"
+           class="bg-white rounded-xl shadow p-5 block hover:shadow-md transition
+                  {% if not customer.is_active %}opacity-50{% endif %}">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-primary-100 text-primary-700 rounded-full
+                                flex items-center justify-center font-bold text-xl flex-shrink-0">
+                        {{ customer.full_name[0] }}
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-lg text-gray-800">{{ customer.full_name }}</h3>
+                        {% if customer.phone %}
+                        <p class="text-sm text-gray-500">{{ customer.phone }}</p>
+                        {% endif %}
+                        {% if customer.neighborhood %}
+                        <span class="inline-block mt-1 bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
+                            {{ customer.neighborhood }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if not customer.is_active %}
+                <span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full">Inactivo</span>
+                {% endif %}
+            </div>
+            {% if customer.address %}
+            <p class="text-sm text-gray-500 mt-2 ml-15">{{ customer.address }}</p>
+            {% endif %}
+        </a>
+        {% else %}
+        <div class="bg-white rounded-xl shadow p-8 text-center text-gray-500">
+            <p class="text-lg">No hay clientes registrados.</p>
+            {% if current_user.has_permission('customers.create') or current_user.has_role('superadmin') %}
+            <a href="{{ url_for('customers.create') }}" class="text-primary-600 hover:underline mt-2 inline-block">
+                Registrar el primero
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

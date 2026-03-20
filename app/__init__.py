@@ -52,12 +52,16 @@ def _register_blueprints(app):
     from app.web.auth import web_auth_bp
     from app.web.products import products_bp
     from app.web.inventory import inventory_bp
+    from app.web.customers import customers_bp
+    from app.web.sales import sales_bp
 
     app.register_blueprint(api_bp, url_prefix='/api/v1')
     app.register_blueprint(web_bp)
     app.register_blueprint(web_auth_bp)
     app.register_blueprint(products_bp)
     app.register_blueprint(inventory_bp)
+    app.register_blueprint(customers_bp)
+    app.register_blueprint(sales_bp)
 
 
 def _register_error_handlers(app):

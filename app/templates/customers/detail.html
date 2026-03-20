@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.full_name }} - Kollexa{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center gap-4">
+        <a href="{{ url_for('customers.index') }}"
+           class="bg-gray-200 hover:bg-gray-300 p-3 rounded-xl transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <div class="flex-1">
+            <h1 class="text-2xl font-bold text-gray-800">{{ customer.full_name }}</h1>
+            {% if customer.neighborhood %}
+            <p class="text-sm text-gray-500">{{ customer.neighborhood }}</p>
+            {% endif %}
+        </div>
+        {% if current_user.has_permission('customers.edit') or current_user.has_role('superadmin') %}
+        <a href="{{ url_for('customers.edit', customer_id=customer.id) }}"
+           class="bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-xl font-semibold transition">
+            Editar
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Info del cliente -->
+    <div class="bg-white rounded-xl shadow p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% if customer.phone %}
+            <div>
+                <p class="text-xs text-gray-400 uppercase">Teléfono</p>
+                <p class="text-lg font-medium">
+                    <a href="tel:{{ customer.phone }}" class="text-primary-600 hover:underline">{{ customer.phone }}</a>
+                </p>
+            </div>
+            {% endif %}
+            {% if customer.address %}
+            <div>
+                <p class="text-xs text-gray-400 uppercase">Dirección</p>
+                <p class="text-gray-700">{{ customer.address }}</p>
+            </div>
+            {% endif %}
+            {% if customer.city %}
+            <div>
+                <p class="text-xs text-gray-400 uppercase">Ciudad</p>
+                <p class="text-gray-700">{{ customer.city }}</p>
+            </div>
+            {% endif %}
+            {% if customer.reference %}
+            <div>
+                <p class="text-xs text-gray-400 uppercase">Referencia</p>
+                <p class="text-gray-700">{{ customer.reference }}</p>
+            </div>
+            {% endif %}
+            {% if customer.notes %}
+            <div class="md:col-span-2">
+                <p class="text-xs text-gray-400 uppercase">Notas</p>
+                <p class="text-gray-700">{{ customer.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Ventas del cliente -->
+    <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-gray-800">Ventas</h2>
+        {% if current_user.has_permission('sales.create') or current_user.has_role('superadmin') %}
+        <a href="{{ url_for('sales.create') }}?customer_id={{ customer.id }}"
+           class="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-semibold transition">
+            + Nueva Venta
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="space-y-3">
+        {% for item in sales_data %}
+        {% set sale = item.sale %}
+        {% set summary = item.summary %}
+        <a href="{{ url_for('sales.detail', sale_id=sale.id) }}"
+           class="bg-white rounded-xl shadow p-5 block hover:shadow-md transition">
+            <div class="flex justify-between items-start">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-mono text-gray-500">#{{ sale.id }}</span>
+                        <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium
+                            {% if sale.status == 'active' %}bg-blue-100 text-blue-800
+                            {% elif sale.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif sale.status == 'cancelled' %}bg-gray-100 text-gray-800
+                            {% elif sale.status == 'defaulted' %}bg-red-100 text-red-800
+                            {% endif %}">
+                            {{ sale.status | capitalize }}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-1">{{ sale.sale_date.strftime('%d/%m/%Y') if sale.sale_date else '' }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xl font-bold text-gray-800">${{ "%.2f"|format(sale.total) }}</p>
+                    <p class="text-sm text-gray-500">{{ summary.installments_paid }}/{{ summary.total_installments }} cuotas</p>
+                </div>
+            </div>
+            {% if sale.status == 'active' %}
+            <div class="mt-3">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-500">Progreso</span>
+                    <span class="font-medium">{{ summary.progress }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="h-3 rounded-full transition-all
+                        {% if summary.progress >= 80 %}bg-green-500
+                        {% elif summary.progress >= 40 %}bg-blue-500
+                        {% else %}bg-yellow-500{% endif %}"
+                         style="width: {{ summary.progress }}%"></div>
+                </div>
+            </div>
+            {% endif %}
+        </a>
+        {% else %}
+        <div class="bg-white rounded-xl shadow p-8 text-center text-gray-500">
+            <p>Este cliente no tiene ventas registradas.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Editar' if customer else 'Nuevo' }} Cliente - Kollexa{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div class="flex items-center gap-4">
+        <a href="{{ url_for('customers.index') }}"
+           class="bg-gray-200 hover:bg-gray-300 p-3 rounded-xl transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <h1 class="text-2xl font-bold text-gray-800">
+            {{ 'Editar Cliente' if customer else 'Nuevo Cliente' }}
+        </h1>
+    </div>
+
+    <div class="bg-white rounded-xl shadow p-6">
+        <form method="POST" class="space-y-5">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            <div>
+                <label for="full_name" class="block text-sm font-medium text-gray-700 mb-1">
+                    Nombre completo *
+                </label>
+                <input type="text" id="full_name" name="full_name" required
+                       value="{{ data.get('full_name') or (customer.full_name if customer else '') or '' }}"
+                       placeholder="Nombre del cliente"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
+                              focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">
+                    Teléfono
+                </label>
+                <input type="tel" id="phone" name="phone"
+                       value="{{ data.get('phone') or (customer.phone if customer else '') or '' }}"
+                       placeholder="Ej: 55 1234 5678"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
+                              focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+
+            <div>
+                <label for="address" class="block text-sm font-medium text-gray-700 mb-1">
+                    Dirección
+                </label>
+                <textarea id="address" name="address" rows="2"
+                          placeholder="Calle, número, entre calles..."
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
+                                 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">{{ data.get('address') or (customer.address if customer else '') or '' }}</textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="neighborhood" class="block text-sm font-medium text-gray-700 mb-1">
+                        Colonia
+                    </label>
+                    <input type="text" id="neighborhood" name="neighborhood"
+                           value="{{ data.get('neighborhood') or (customer.neighborhood if customer else '') or '' }}"
+                           list="neighborhoods_list"
+                           placeholder="Colonia"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
+                                  focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <datalist id="neighborhoods_list">
+                        {% for n in neighborhoods %}
+                        <option value="{{ n }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div>
+                    <label for="city" class="block text-sm font-medium text-gray-700 mb-1">
+                        Ciudad
+                    </label>
+                    <input type="text" id="city" name="city"
+                           value="{{ data.get('city') or (customer.city if customer else '') or '' }}"
+                           placeholder="Ciudad"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
+                                  focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                </div>
+            </div>
+
+            <div>
+                <label for="reference" class="block text-sm font-medium text-gray-700 mb-1">
+                    Referencia para ubicar
+                </label>
+                <input type="text" id="reference" name="reference"
+                       value="{{ data.get('reference') or (customer.reference if customer else '') or '' }}"
+                       placeholder="Ej: casa azul frente a la tienda"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
+                              focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+            </div>
+
+            <div>
+                <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">
+                    Notas
+                </label>
+                <textarea id="notes" name="notes" rows="2"
+                          placeholder="Notas sobre el cliente..."
+                          class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
+                                 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">{{ data.get('notes') or (customer.notes if customer else '') or '' }}</textarea>
+            </div>
+
+            <div class="flex gap-3 pt-4">
+                <button type="submit"
+                        class="flex-1 bg-primary-600 hover:bg-primary-700 text-white
+                               font-semibold py-4 rounded-xl text-lg transition active:scale-[0.98]">
+                    {{ 'Guardar Cambios' if customer else 'Registrar Cliente' }}
+                </button>
+                <a href="{{ url_for('customers.index') }}"
+                   class="px-6 py-4 bg-gray-200 hover:bg-gray-300 text-gray-700
+                          rounded-xl text-lg font-medium transition text-center">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

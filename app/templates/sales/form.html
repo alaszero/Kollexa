@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Nueva Venta - Kollexa{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6" x-data="saleForm()">
+    <div class="flex items-center gap-4">
+        <a href="{{ url_for('sales.index') }}"
+           class="bg-gray-200 hover:bg-gray-300 p-3 rounded-xl transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <h1 class="text-2xl font-bold text-gray-800">Nueva Venta</h1>
+    </div>
+
+    <form method="POST" class="space-y-6">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+        <!-- PASO 1: Cliente -->
+        <div class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">1. Seleccionar Cliente</h2>
+            <select name="customer_id" required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg bg-white
+                           focus:ring-2 focus:ring-primary-500">
+                <option value="">Seleccionar cliente...</option>
+                {% for c in customers %}
+                <option value="{{ c.id }}">{{ c.full_name }}{% if c.neighborhood %} - {{ c.neighborhood }}{% endif %}</option>
+                {% endfor %}
+            </select>
+            {% if not customers %}
+            <p class="mt-2 text-sm text-red-600">
+                No hay clientes. <a href="{{ url_for('customers.create') }}" class="underline">Registra uno primero</a>.
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- PASO 2: Productos -->
+        <div class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">2. Agregar Productos</h2>
+
+            {% if not agent_stock %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-yellow-800 text-sm">
+                No tienes productos en tu stock. Pide que te surtan desde el almacén.
+            </div>
+            {% else %}
+
+            <!-- Items dinámicos -->
+            <template x-for="(item, index) in items" :key="index">
+                <div class="flex flex-col sm:flex-row gap-3 mb-4 p-4 bg-gray-50 rounded-xl">
+                    <div class="flex-1">
+                        <select :name="'product_id[]'" x-model="item.product_id" required
+                                @change="updatePrice(index)"
+                                class="w-full px-3 py-3 border border-gray-300 rounded-xl text-base bg-white
+                                       focus:ring-2 focus:ring-primary-500">
+                            <option value="">Producto...</option>
+                            {% for pid, stock_info in agent_stock.items() %}
+                            <option value="{{ pid }}"
+                                    data-price="{{ stock_info.product.sell_price }}"
+                                    data-stock="{{ stock_info.quantity }}">
+                                {{ stock_info.product.name }} ({{ stock_info.quantity }} disp.)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="w-24">
+                        <input type="number" :name="'quantity[]'" x-model.number="item.quantity"
+                               min="1" required placeholder="Cant."
+                               class="w-full px-3 py-3 border border-gray-300 rounded-xl text-base text-center
+                                      focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    <div class="w-32">
+                        <div class="relative">
+                            <span class="absolute left-3 top-3 text-gray-400">$</span>
+                            <input type="number" :name="'unit_price[]'" x-model="item.unit_price"
+                                   step="0.01" min="0.01" required placeholder="Precio"
+                                   class="w-full pl-7 pr-3 py-3 border border-gray-300 rounded-xl text-base
+                                          focus:ring-2 focus:ring-primary-500">
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <button type="button" @click="removeItem(index)" x-show="items.length > 1"
+                                class="bg-red-100 hover:bg-red-200 text-red-700 p-3 rounded-xl transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            <button type="button" @click="addItem()"
+                    class="w-full border-2 border-dashed border-gray-300 hover:border-primary-400
+                           text-gray-500 hover:text-primary-600 py-3 rounded-xl transition
+                           font-medium">
+                + Agregar otro producto
+            </button>
+
+            <!-- Subtotal -->
+            <div class="mt-4 pt-4 border-t text-right">
+                <p class="text-lg text-gray-600">
+                    Subtotal: <span class="font-bold text-gray-800" x-text="'$' + subtotal().toFixed(2)"></span>
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- PASO 3: Plan de pagos -->
+        <div class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">3. Plan de Pagos</h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Número de cuotas semanales</label>
+                    <input type="number" name="num_installments" x-model.number="numInstallments"
+                           min="1" max="52" value="10"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
+                                  focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                </div>
+                <div class="flex items-end">
+                    <div class="bg-primary-50 rounded-xl p-4 w-full text-center">
+                        <p class="text-sm text-primary-600">Pago semanal estimado</p>
+                        <p class="text-2xl font-bold text-primary-700"
+                           x-text="'$' + weeklyPayment().toFixed(2)"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notas -->
+        <div class="bg-white rounded-xl shadow p-6">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Notas (opcional)</label>
+            <textarea name="notes" rows="2"
+                      placeholder="Notas sobre esta venta..."
+                      class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
+                             focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+        </div>
+
+        <!-- Confirmar -->
+        {% if agent_stock %}
+        <button type="submit"
+                class="w-full bg-green-600 hover:bg-green-700 text-white
+                       font-semibold py-4 rounded-xl text-lg transition active:scale-[0.98]
+                       shadow-lg">
+            Confirmar Venta
+        </button>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function saleForm() {
+    // Datos de stock del agente
+    const stockData = {
+        {% for pid, stock_info in agent_stock.items() %}
+        '{{ pid }}': { price: {{ stock_info.product.sell_price }}, stock: {{ stock_info.quantity }} },
+        {% endfor %}
+    };
+
+    return {
+        items: [{ product_id: '', quantity: 1, unit_price: '' }],
+        numInstallments: 10,
+
+        addItem() {
+            this.items.push({ product_id: '', quantity: 1, unit_price: '' });
+        },
+
+        removeItem(index) {
+            this.items.splice(index, 1);
+        },
+
+        updatePrice(index) {
+            const pid = this.items[index].product_id;
+            if (pid && stockData[pid]) {
+                this.items[index].unit_price = stockData[pid].price.toFixed(2);
+            }
+        },
+
+        subtotal() {
+            return this.items.reduce((sum, item) => {
+                const qty = parseFloat(item.quantity) || 0;
+                const price = parseFloat(item.unit_price) || 0;
+                return sum + (qty * price);
+            }, 0);
+        },
+
+        weeklyPayment() {
+            const total = this.subtotal();
+            const n = this.numInstallments || 1;
+            return total / n;
+        },
+    };
+}
+</script>
+{% endblock %}
