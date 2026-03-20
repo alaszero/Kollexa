@@ -66,7 +66,7 @@ class CustomerPortalToken(db.Model):
     def is_valid(self):
         if not self.is_active:
             return False
-        if self.expires_at and datetime.now(timezone.utc) > self.expires_at:
+        if self.expires_at and datetime.utcnow() > self.expires_at:
             return False
         return True
 

@@ -55,6 +55,7 @@ def _register_blueprints(app):
     from app.web.customers import customers_bp
     from app.web.sales import sales_bp
     from app.web.collections import collections_bp
+    from app.web.portal import portal_bp
 
     app.register_blueprint(api_bp, url_prefix='/api/v1')
     app.register_blueprint(web_bp)
@@ -64,6 +65,7 @@ def _register_blueprints(app):
     app.register_blueprint(customers_bp)
     app.register_blueprint(sales_bp)
     app.register_blueprint(collections_bp)
+    app.register_blueprint(portal_bp)
 
 
 def _register_error_handlers(app):

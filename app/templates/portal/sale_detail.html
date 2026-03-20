@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalle de Crédito - Kollexa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Header -->
+    <div class="bg-primary-700 text-white py-6 px-4">
+        <div class="max-w-lg mx-auto">
+            <a href="{{ url_for('portal.view', token=token) }}" class="text-primary-200 text-sm hover:text-white">&larr; Volver</a>
+            <h1 class="text-xl font-bold mt-1">Crédito #{{ sale.id }}</h1>
+            <p class="text-primary-200 text-sm">{{ customer.full_name }}</p>
+        </div>
+    </div>
+
+    <div class="max-w-lg mx-auto px-4 py-6 space-y-4">
+
+        <!-- Resumen del crédito -->
+        <div class="bg-white rounded-2xl shadow p-5">
+            <div class="grid grid-cols-3 gap-3 text-center">
+                <div>
+                    <p class="text-xs text-gray-400">Total</p>
+                    <p class="text-lg font-bold text-gray-800">${{ "%.2f"|format(sale.total) }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400">Pagado</p>
+                    <p class="text-lg font-bold text-green-600">${{ "%.2f"|format(paid) }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400">Restante</p>
+                    <p class="text-lg font-bold text-red-600">${{ "%.2f"|format(remaining) }}</p>
+                </div>
+            </div>
+
+            <!-- Barra de progreso -->
+            <div class="mt-4">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-500">{{ installments_paid }}/{{ total_installments }} cuotas</span>
+                    <span class="font-medium">{{ progress }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="h-3 rounded-full
+                        {% if progress >= 80 %}bg-green-500
+                        {% elif progress >= 40 %}bg-blue-500
+                        {% else %}bg-yellow-500{% endif %}"
+                         style="width: {{ progress }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos -->
+        <div class="bg-white rounded-2xl shadow p-5">
+            <h2 class="font-bold text-gray-700 mb-3">Productos</h2>
+            {% for detail in sale.details %}
+            <div class="flex justify-between py-2 {% if not loop.last %}border-b border-gray-100{% endif %}">
+                <div>
+                    <p class="text-sm font-medium text-gray-800">{{ detail.product.name }}</p>
+                    <p class="text-xs text-gray-400">x{{ detail.quantity }}</p>
+                </div>
+                <p class="text-sm font-semibold">${{ "%.2f"|format(detail.line_total) }}</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Calendario de pagos -->
+        <div class="bg-white rounded-2xl shadow p-5">
+            <h2 class="font-bold text-gray-700 mb-3">Calendario de Pagos</h2>
+            <div class="space-y-2">
+                {% for inst in plan.installments %}
+                <div class="flex items-center justify-between py-2 px-3 rounded-xl
+                    {% if inst.status == 'paid' %}bg-green-50
+                    {% elif inst.status == 'overdue' %}bg-red-50
+                    {% elif inst.status == 'partial' %}bg-yellow-50
+                    {% elif inst == next_installment %}bg-blue-50 ring-2 ring-blue-300
+                    {% else %}bg-gray-50{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <!-- Icono de estado -->
+                        {% if inst.status == 'paid' %}
+                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                            </svg>
+                        </div>
+                        {% elif inst.status == 'overdue' %}
+                        <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01M12 3a9 9 0 100 18 9 9 0 000-18z"/>
+                            </svg>
+                        </div>
+                        {% elif inst.status == 'partial' %}
+                        <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">~</span>
+                        </div>
+                        {% else %}
+                        <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs font-bold">{{ loop.index }}</span>
+                        </div>
+                        {% endif %}
+
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">
+                                Cuota {{ loop.index }}
+                            </p>
+                            <p class="text-xs text-gray-500">{{ inst.due_date.strftime('%d/%m/%Y') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+                        <p class="text-sm font-bold
+                            {% if inst.status == 'paid' %}text-green-700
+                            {% elif inst.status == 'overdue' %}text-red-700
+                            {% else %}text-gray-800{% endif %}">
+                            ${{ "%.2f"|format(inst.expected_amount) }}
+                        </p>
+                        {% if inst.status == 'paid' %}
+                        <p class="text-xs text-green-600">Pagado</p>
+                        {% elif inst.status == 'overdue' %}
+                        <p class="text-xs text-red-600">Vencido</p>
+                        {% elif inst.status == 'partial' %}
+                        <p class="text-xs text-yellow-600">Abonado: ${{ "%.2f"|format(inst.paid_amount) }}</p>
+                        {% elif inst == next_installment %}
+                        <p class="text-xs text-blue-600 font-semibold">Próximo pago</p>
+                        {% else %}
+                        <p class="text-xs text-gray-400">Pendiente</p>
+                        {% endif %}
+
+                        {% if inst.penalty_amount > 0 %}
+                        <p class="text-xs text-red-500">+${{ "%.2f"|format(inst.penalty_amount) }} recargo</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center py-6 text-xs text-gray-400">
+        Kollexa &middot; Estado de cuenta actualizado
+    </div>
+
+</body>
+</html>

@@ -27,6 +27,13 @@ def create_admin_command(username, password, email):
         click.echo(f'Error: el usuario "{username}" ya existe.', err=True)
 
 
+@app.cli.command('seed-demo')
+def seed_demo_command():
+    """Poblar base de datos con datos de demostración."""
+    from scripts.seed_demo import run_demo_seed
+    run_demo_seed(app)
+
+
 @app.cli.command('version')
 def version_command():
     """Mostrar versión actual."""

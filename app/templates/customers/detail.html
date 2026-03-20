@@ -16,12 +16,24 @@
             <p class="text-sm text-gray-500">{{ customer.neighborhood }}</p>
             {% endif %}
         </div>
-        {% if current_user.has_permission('customers.edit') or current_user.has_role('superadmin') %}
-        <a href="{{ url_for('customers.edit', customer_id=customer.id) }}"
-           class="bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-xl font-semibold transition">
-            Editar
-        </a>
-        {% endif %}
+        <div class="flex gap-2">
+            {% if current_user.has_permission('customers.view') or current_user.has_role('superadmin') %}
+            <form method="POST" action="{{ url_for('portal.generate_token', customer_id=customer.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"
+                        class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-3 rounded-xl font-semibold transition"
+                        onclick="return confirm('¿Generar link de portal para este cliente?')">
+                    Generar Link
+                </button>
+            </form>
+            {% endif %}
+            {% if current_user.has_permission('customers.edit') or current_user.has_role('superadmin') %}
+            <a href="{{ url_for('customers.edit', customer_id=customer.id) }}"
+               class="bg-primary-600 hover:bg-primary-700 text-white px-5 py-3 rounded-xl font-semibold transition">
+                Editar
+            </a>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Info del cliente -->
