@@ -8,32 +8,125 @@
         <span class="text-sm text-gray-500">v{{ config.VERSION }}</span>
     </div>
 
-    <!-- KPIs placeholder -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl shadow p-6">
-            <p class="text-sm text-gray-500">Ventas Activas</p>
-            <p class="text-3xl font-bold text-primary-700 mt-2">--</p>
+    <!-- KPIs principales -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Ventas Activas</p>
+            <p class="text-3xl font-bold text-primary-700 mt-1">{{ kpis.active_sales }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ kpis.completed_sales }} completadas</p>
         </div>
-        <div class="bg-white rounded-xl shadow p-6">
-            <p class="text-sm text-gray-500">Cobrado Hoy</p>
-            <p class="text-3xl font-bold text-green-600 mt-2">--</p>
+        <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Cobrado Hoy</p>
+            <p class="text-3xl font-bold text-green-600 mt-1">{{ kpis.collected_today|currency }}</p>
+            <p class="text-xs text-gray-400 mt-1">Total: {{ kpis.total_collected|currency }}</p>
         </div>
-        <div class="bg-white rounded-xl shadow p-6">
-            <p class="text-sm text-gray-500">Pendiente</p>
-            <p class="text-3xl font-bold text-yellow-600 mt-2">--</p>
+        <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Pendiente</p>
+            <p class="text-3xl font-bold text-yellow-600 mt-1">{{ kpis.pending_total|currency }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ kpis.total_customers }} clientes</p>
         </div>
-        <div class="bg-white rounded-xl shadow p-6">
-            <p class="text-sm text-gray-500">Atrasado</p>
-            <p class="text-3xl font-bold text-red-600 mt-2">--</p>
+        <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Cuotas Atrasadas</p>
+            <p class="text-3xl font-bold text-red-600 mt-1">{{ kpis.overdue_count }}</p>
+            <p class="text-xs text-gray-400 mt-1">Vendido: {{ kpis.total_sold|currency }}</p>
         </div>
     </div>
 
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top productos -->
+        <div class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Top Productos Vendidos</h2>
+            {% if top_products %}
+            <div class="space-y-3">
+                {% for name, sku, units, revenue in top_products %}
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary-700 text-sm font-bold">{{ loop.index }}</span>
+                        <div>
+                            <p class="font-medium text-gray-800 text-sm">{{ name }}</p>
+                            <p class="text-xs text-gray-400">{{ sku or 'Sin SKU' }}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-gray-800">{{ units|int }} uds</p>
+                        <p class="text-xs text-green-600">{{ revenue|currency }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-400 text-sm">Sin datos de ventas aun.</p>
+            {% endif %}
+        </div>
+
+        <!-- Últimos pagos -->
+        <div class="bg-white rounded-xl shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Pagos Recientes</h2>
+            {% if recent_payments %}
+            <div class="space-y-3">
+                {% for p in recent_payments[:8] %}
+                <div class="flex items-center justify-between border-b border-gray-50 pb-2">
+                    <div>
+                        <p class="font-medium text-gray-800 text-sm">
+                            {{ p.installment.plan.sale.customer.full_name }}
+                        </p>
+                        <p class="text-xs text-gray-400">
+                            {{ p.payment_date.strftime('%d/%m %H:%M') }}
+                            {% if p.collector %}
+                            &middot; {{ p.collector.full_name }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <p class="font-bold text-green-600">{{ p.amount|currency }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-400 text-sm">Sin pagos registrados.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Resumen por agente (solo admins) -->
+    {% if not is_agent and agents_summary %}
     <div class="bg-white rounded-xl shadow p-6">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">Bienvenido, {{ current_user.full_name }}</h2>
-        <p class="text-gray-500">
-            El sistema está funcionando correctamente. Los módulos se irán habilitando progresivamente.
-        </p>
-        <div class="mt-4 flex flex-wrap gap-2">
+        <h2 class="text-lg font-semibold text-gray-700 mb-4">Agentes</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-gray-500 border-b">
+                        <th class="pb-2">Agente</th>
+                        <th class="pb-2 text-center">Ventas Activas</th>
+                        <th class="pb-2 text-right">Cobrado Hoy</th>
+                        <th class="pb-2 text-right">Stock</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in agents_summary %}
+                    <tr class="border-b border-gray-50">
+                        <td class="py-2">
+                            <p class="font-medium text-gray-800">{{ item.agent.full_name }}</p>
+                            <p class="text-xs text-gray-400">{{ item.agent.username }}</p>
+                        </td>
+                        <td class="py-2 text-center">
+                            <span class="inline-block bg-primary-100 text-primary-700 text-sm font-bold px-2 py-0.5 rounded-full">{{ item.active_sales }}</span>
+                        </td>
+                        <td class="py-2 text-right font-medium {% if item.collected_today > 0 %}text-green-600{% else %}text-gray-400{% endif %}">
+                            {{ item.collected_today|currency }}
+                        </td>
+                        <td class="py-2 text-right text-gray-600">{{ item.stock_items }} uds</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Bienvenida -->
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-700 mb-2">Bienvenido, {{ current_user.full_name }}</h2>
+        <div class="flex flex-wrap gap-2">
             {% for role in current_user.roles %}
             <span class="inline-block bg-primary-100 text-primary-800 text-sm px-3 py-1 rounded-full">
                 {{ role.name | capitalize }}

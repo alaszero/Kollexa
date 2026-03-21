@@ -35,15 +35,15 @@
             <div class="grid grid-cols-3 gap-3 text-center">
                 <div>
                     <p class="text-xs text-gray-400">Total</p>
-                    <p class="text-lg font-bold text-gray-800">${{ "%.2f"|format(sale.total) }}</p>
+                    <p class="text-lg font-bold text-gray-800">{{ sale.total|currency }}</p>
                 </div>
                 <div>
                     <p class="text-xs text-gray-400">Pagado</p>
-                    <p class="text-lg font-bold text-green-600">${{ "%.2f"|format(paid) }}</p>
+                    <p class="text-lg font-bold text-green-600">{{ paid|currency }}</p>
                 </div>
                 <div>
                     <p class="text-xs text-gray-400">Restante</p>
-                    <p class="text-lg font-bold text-red-600">${{ "%.2f"|format(remaining) }}</p>
+                    <p class="text-lg font-bold text-red-600">{{ remaining|currency }}</p>
                 </div>
             </div>
 
@@ -72,7 +72,7 @@
                     <p class="text-sm font-medium text-gray-800">{{ detail.product.name }}</p>
                     <p class="text-xs text-gray-400">x{{ detail.quantity }}</p>
                 </div>
-                <p class="text-sm font-semibold">${{ "%.2f"|format(detail.line_total) }}</p>
+                <p class="text-sm font-semibold">{{ detail.line_total|currency }}</p>
             </div>
             {% endfor %}
         </div>
@@ -125,14 +125,14 @@
                             {% if inst.status == 'paid' %}text-green-700
                             {% elif inst.status == 'overdue' %}text-red-700
                             {% else %}text-gray-800{% endif %}">
-                            ${{ "%.2f"|format(inst.expected_amount) }}
+                            {{ inst.expected_amount|currency }}
                         </p>
                         {% if inst.status == 'paid' %}
                         <p class="text-xs text-green-600">Pagado</p>
                         {% elif inst.status == 'overdue' %}
                         <p class="text-xs text-red-600">Vencido</p>
                         {% elif inst.status == 'partial' %}
-                        <p class="text-xs text-yellow-600">Abonado: ${{ "%.2f"|format(inst.paid_amount) }}</p>
+                        <p class="text-xs text-yellow-600">Abonado: {{ inst.paid_amount|currency }}</p>
                         {% elif inst == next_installment %}
                         <p class="text-xs text-blue-600 font-semibold">Próximo pago</p>
                         {% else %}
@@ -140,7 +140,7 @@
                         {% endif %}
 
                         {% if inst.penalty_amount > 0 %}
-                        <p class="text-xs text-red-500">+${{ "%.2f"|format(inst.penalty_amount) }} recargo</p>
+                        <p class="text-xs text-red-500">+{{ inst.penalty_amount|currency }} recargo</p>
                         {% endif %}
                     </div>
                 </div>

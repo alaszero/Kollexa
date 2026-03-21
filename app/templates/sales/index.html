@@ -65,7 +65,7 @@
                     </p>
                 </div>
                 <div class="text-right flex-shrink-0">
-                    <p class="text-xl font-bold text-gray-800">${{ "%.2f"|format(sale.total) }}</p>
+                    <p class="text-xl font-bold text-gray-800">{{ sale.total|currency }}</p>
                     {% if sale.status == 'active' %}
                     <p class="text-sm text-gray-500">{{ summary.installments_paid }}/{{ summary.total_installments }}</p>
                     {% endif %}

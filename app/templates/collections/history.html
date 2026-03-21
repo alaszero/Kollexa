@@ -18,7 +18,7 @@
         <div class="bg-white rounded-xl shadow p-4">
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="font-semibold text-lg text-green-700">${{ "%.2f"|format(p.amount) }}</p>
+                    <p class="font-semibold text-lg text-green-700">{{ p.amount|currency }}</p>
                     <p class="text-sm text-gray-500">
                         Cuota #{{ p.installment.installment_num }}
                         &middot; Venta #{{ p.installment.plan.sale_id }}

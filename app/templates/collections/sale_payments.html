@@ -20,15 +20,15 @@
     <div class="grid grid-cols-3 gap-4">
         <div class="bg-white rounded-xl shadow p-4 text-center">
             <p class="text-xs text-gray-400 uppercase">Total</p>
-            <p class="text-xl font-bold text-gray-800">${{ "%.2f"|format(sale.total) }}</p>
+            <p class="text-xl font-bold text-gray-800">{{ sale.total|currency }}</p>
         </div>
         <div class="bg-white rounded-xl shadow p-4 text-center">
             <p class="text-xs text-gray-400 uppercase">Pagado</p>
-            <p class="text-xl font-bold text-green-600">${{ "%.2f"|format(summary.paid) }}</p>
+            <p class="text-xl font-bold text-green-600">{{ summary.paid|currency }}</p>
         </div>
         <div class="bg-white rounded-xl shadow p-4 text-center">
             <p class="text-xs text-gray-400 uppercase">Restante</p>
-            <p class="text-xl font-bold text-yellow-600">${{ "%.2f"|format(summary.remaining) }}</p>
+            <p class="text-xl font-bold text-yellow-600">{{ summary.remaining|currency }}</p>
         </div>
     </div>
 
@@ -70,7 +70,7 @@
                             {% else %}text-gray-500{% endif %}">
                             {% if inst.status == 'paid' %}Pagado
                             {% elif inst.status == 'overdue' %}Atrasado
-                            {% elif inst.status == 'partial' %}Parcial (${{ "%.2f"|format(inst.paid_amount) }})
+                            {% elif inst.status == 'partial' %}Parcial ({{ inst.paid_amount|currency }})
                             {% elif inst.status == 'grace' %}En gracia
                             {% else %}Pendiente{% endif %}
                         </p>
@@ -78,9 +78,9 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <div class="text-right">
-                        <p class="font-bold text-gray-800">${{ "%.2f"|format(inst.expected_amount) }}</p>
+                        <p class="font-bold text-gray-800">{{ inst.expected_amount|currency }}</p>
                         {% if inst.penalty_amount > 0 %}
-                        <p class="text-xs text-red-600">+${{ "%.2f"|format(inst.penalty_amount) }}</p>
+                        <p class="text-xs text-red-600">+{{ inst.penalty_amount|currency }}</p>
                         {% endif %}
                     </div>
                     {% if inst.status in ('pending', 'partial', 'overdue', 'grace') %}
@@ -104,7 +104,7 @@
             {% for p in payments %}
             <div class="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
                 <div>
-                    <p class="font-medium text-gray-800">${{ "%.2f"|format(p.amount) }}</p>
+                    <p class="font-medium text-gray-800">{{ p.amount|currency }}</p>
                     <p class="text-xs text-gray-500">
                         {{ p.payment_date.strftime('%d/%m/%Y %H:%M') if p.payment_date else '' }}
                         &middot; {{ p.payment_method | capitalize }}

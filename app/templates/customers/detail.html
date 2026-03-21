@@ -107,7 +107,7 @@
                     <p class="text-sm text-gray-500 mt-1">{{ sale.sale_date.strftime('%d/%m/%Y') if sale.sale_date else '' }}</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-xl font-bold text-gray-800">${{ "%.2f"|format(sale.total) }}</p>
+                    <p class="text-xl font-bold text-gray-800">{{ sale.total|currency }}</p>
                     <p class="text-sm text-gray-500">{{ summary.installments_paid }}/{{ summary.total_installments }} cuotas</p>
                 </div>
             </div>

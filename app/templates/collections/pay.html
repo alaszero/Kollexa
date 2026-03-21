@@ -40,14 +40,14 @@
             </div>
             <div>
                 <p class="text-xs text-gray-400 uppercase">Monto esperado</p>
-                <p class="font-medium">${{ "%.2f"|format(installment.expected_amount) }}</p>
+                <p class="font-medium">{{ installment.expected_amount|currency }}</p>
             </div>
         </div>
 
         {% if installment.penalty_amount > 0 %}
         <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-4">
             <p class="text-sm text-red-700">
-                Penalización por atraso: <strong>${{ "%.2f"|format(installment.penalty_amount) }}</strong>
+                Penalización por atraso: <strong>{{ installment.penalty_amount|currency }}</strong>
             </p>
         </div>
         {% endif %}
@@ -55,7 +55,7 @@
         {% if installment.paid_amount > 0 %}
         <div class="bg-green-50 border border-green-200 rounded-xl p-3 mb-4">
             <p class="text-sm text-green-700">
-                Ya abonado: <strong>${{ "%.2f"|format(installment.paid_amount) }}</strong>
+                Ya abonado: <strong>{{ installment.paid_amount|currency }}</strong>
             </p>
         </div>
         {% endif %}
@@ -63,7 +63,7 @@
         <!-- Total a cobrar -->
         <div class="bg-primary-50 border border-primary-200 rounded-xl p-4 text-center mb-6">
             <p class="text-sm text-primary-600">Saldo de esta cuota</p>
-            <p class="text-4xl font-bold text-primary-700">${{ "%.2f"|format(owed) }}</p>
+            <p class="text-4xl font-bold text-primary-700">{{ owed|currency }}</p>
         </div>
 
         <!-- Formulario de pago -->
@@ -88,12 +88,12 @@
             <div class="flex flex-wrap gap-2">
                 <button type="button" @click="amount = {{ owed }}"
                         class="bg-green-50 hover:bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-medium transition">
-                    Cuota completa (${{ "%.2f"|format(owed) }})
+                    Cuota completa ({{ owed|currency }})
                 </button>
                 {% if plan.installment_amount != owed %}
                 <button type="button" @click="amount = {{ plan.installment_amount }}"
                         class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl text-sm font-medium transition">
-                    Cuota base (${{ "%.2f"|format(plan.installment_amount) }})
+                    Cuota base ({{ plan.installment_amount|currency }})
                 </button>
                 {% endif %}
                 <button type="button" @click="amount = Math.round(amount / 2 * 100) / 100"

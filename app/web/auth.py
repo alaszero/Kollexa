@@ -17,7 +17,9 @@ def index():
 @web_bp.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard/index.html')
+    from app.services.dashboard_service import get_dashboard_data
+    data = get_dashboard_data(current_user)
+    return render_template('dashboard/index.html', **data)
 
 
 # Blueprint separado para auth (evitar conflicto de nombres)

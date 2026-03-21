@@ -34,11 +34,11 @@
             <div class="grid grid-cols-2 gap-4 text-center">
                 <div>
                     <p class="text-xs text-gray-400 uppercase">Total Pagado</p>
-                    <p class="text-2xl font-bold text-green-600">${{ "%.2f"|format(total_paid) }}</p>
+                    <p class="text-2xl font-bold text-green-600">{{ total_paid|currency }}</p>
                 </div>
                 <div>
                     <p class="text-xs text-gray-400 uppercase">Saldo Pendiente</p>
-                    <p class="text-2xl font-bold text-red-600">${{ "%.2f"|format(total_debt) }}</p>
+                    <p class="text-2xl font-bold text-red-600">{{ total_debt|currency }}</p>
                 </div>
             </div>
         </div>
@@ -56,7 +56,7 @@
                     <p class="text-sm text-gray-500">{{ sale.sale_date.strftime('%d/%m/%Y') if sale.sale_date else '' }}</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-lg font-bold">${{ "%.2f"|format(sale.total) }}</p>
+                    <p class="text-lg font-bold">{{ sale.total|currency }}</p>
                     <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium
                         {% if sale.status == 'active' %}bg-blue-100 text-blue-800
                         {% elif sale.status == 'completed' %}bg-green-100 text-green-800
@@ -71,7 +71,7 @@
             <!-- Barra de progreso -->
             <div class="mt-4">
                 <div class="flex justify-between text-sm mb-1">
-                    <span class="text-gray-500">Pagado: ${{ "%.2f"|format(sd.paid) }}</span>
+                    <span class="text-gray-500">Pagado: {{ sd.paid|currency }}</span>
                     <span class="font-medium text-gray-700">{{ sd.progress }}%</span>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-3">
@@ -92,7 +92,7 @@
                         <p class="text-sm text-gray-700">{{ sd.next_installment.due_date.strftime('%d/%m/%Y') }}</p>
                     </div>
                     <p class="text-lg font-bold text-yellow-700">
-                        ${{ "%.2f"|format(sd.next_installment.expected_amount + sd.next_installment.penalty_amount - sd.next_installment.paid_amount) }}
+                        {{ sd.next_installment.expected_amount + sd.next_installment.penalty_amount - sd.next_installment.paid_amount|currency }}
                     </p>
                 </div>
             </div>

@@ -68,7 +68,7 @@
                 </div>
             </div>
             <div class="mt-3 text-sm text-gray-500">
-                Venta: <span class="font-medium text-gray-700">${{ "%.2f"|format(product.sell_price) }}</span>
+                Venta: <span class="font-medium text-gray-700">{{ product.sell_price|currency }}</span>
             </div>
         </div>
         {% else %}

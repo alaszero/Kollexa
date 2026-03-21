@@ -24,6 +24,9 @@ def create_app(config_name=None):
     # Registrar error handlers
     _register_error_handlers(app)
 
+    # Registrar filtros y context processors de Jinja
+    _register_jinja_helpers(app)
+
     # Configurar SQLite WAL mode si aplica
     _configure_sqlite(app)
 
@@ -66,6 +69,13 @@ def _register_blueprints(app):
     app.register_blueprint(sales_bp)
     app.register_blueprint(collections_bp)
     app.register_blueprint(portal_bp)
+
+
+def _register_jinja_helpers(app):
+    """Registrar filtros y funciones globales en Jinja2."""
+    from app.utils.helpers import format_currency
+
+    app.jinja_env.filters['currency'] = format_currency
 
 
 def _register_error_handlers(app):
