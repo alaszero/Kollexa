@@ -1,5 +1,6 @@
 """Vistas web de inventario."""
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+import json
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from app.services import inventory_service as inv
 from app.services import product_service as ps
@@ -14,14 +15,34 @@ inventory_bp = Blueprint('inventory', __name__, url_prefix='/inventory')
 @login_required
 @permission_required('inventory.view')
 def index():
-    """Vista principal: stock del almacén."""
+    """Vista principal: stock del almacen."""
+    view = request.args.get('view', 'grid')
     warehouse = inv.get_warehouse()
     if not warehouse:
-        flash('Almacén no configurado.', 'error')
+        flash('Almacen no configurado.', 'error')
         return redirect(url_for('web.dashboard'))
 
     items = inv.get_stock_by_location(warehouse.id)
-    return render_template('inventory/index.html', items=items, warehouse=warehouse)
+    products = ps.get_products_query().all()
+    agents = User.query.filter(
+        User.roles.any(Role.name == 'agent')
+    ).order_by(User.full_name).all()
+    agents = [a for a in agents if a.is_active]
+
+    warehouse_stock = {
+        item.product_id: item.quantity
+        for item, product in items
+    }
+
+    return render_template(
+        'inventory/index.html',
+        items=items,
+        warehouse=warehouse,
+        products=products,
+        agents=agents,
+        warehouse_stock=warehouse_stock,
+        view=view,
+    )
 
 
 @inventory_bp.route('/agents')
@@ -202,6 +223,134 @@ def movements():
         product_id=product_id,
         movement_type=movement_type,
     )
-    movements = query.limit(100).all()
+    movements_list = query.limit(100).all()
 
-    return render_template('inventory/movements.html', movements=movements)
+    return render_template('inventory/movements.html', movements=movements_list)
+
+
+# ── Operaciones batch (carrito) ──
+
+@inventory_bp.route('/batch/purchase', methods=['POST'])
+@login_required
+@permission_required('inventory.purchase')
+def batch_purchase():
+    """Entrada multiple de productos al almacen."""
+    items_json = request.form.get('items', '[]')
+    notes = request.form.get('notes', '').strip()
+    try:
+        items = json.loads(items_json)
+    except (json.JSONDecodeError, TypeError):
+        flash('Datos invalidos.', 'error')
+        return redirect(url_for('inventory.index'))
+
+    if not items:
+        flash('Agrega al menos un producto.', 'error')
+        return redirect(url_for('inventory.index'))
+
+    warehouse = inv.get_warehouse()
+    try:
+        count = inv.batch_purchase(
+            items=items,
+            warehouse_id=warehouse.id,
+            performed_by=current_user.id,
+            notes=notes or None,
+        )
+        flash(f'{count} producto(s) ingresados al almacen.', 'success')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
+
+    return redirect(url_for('inventory.index'))
+
+
+@inventory_bp.route('/batch/dispatch', methods=['POST'])
+@login_required
+@permission_required('inventory.dispatch')
+def batch_dispatch():
+    """Surtir agente con multiples productos."""
+    agent_user_id = request.form.get('agent_user_id', type=int)
+    items_json = request.form.get('items', '[]')
+    notes = request.form.get('notes', '').strip()
+
+    if not agent_user_id:
+        flash('Selecciona un agente.', 'error')
+        return redirect(url_for('inventory.index'))
+
+    try:
+        items = json.loads(items_json)
+    except (json.JSONDecodeError, TypeError):
+        flash('Datos invalidos.', 'error')
+        return redirect(url_for('inventory.index'))
+
+    if not items:
+        flash('Agrega al menos un producto.', 'error')
+        return redirect(url_for('inventory.index'))
+
+    warehouse = inv.get_warehouse()
+    agent_location = inv.get_agent_location(agent_user_id)
+    if not agent_location:
+        flash('El agente no tiene ubicacion de inventario.', 'error')
+        return redirect(url_for('inventory.index'))
+
+    try:
+        count = inv.batch_dispatch(
+            items=items,
+            warehouse_id=warehouse.id,
+            agent_location_id=agent_location.id,
+            performed_by=current_user.id,
+            notes=notes or None,
+        )
+        agent = db.session.get(User, agent_user_id)
+        flash(f'{count} producto(s) surtidos a {agent.full_name}.', 'success')
+    except inv.InsufficientStockError as e:
+        flash(str(e), 'error')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
+
+    return redirect(url_for('inventory.index'))
+
+
+@inventory_bp.route('/batch/return', methods=['POST'])
+@login_required
+@permission_required('inventory.return')
+def batch_return():
+    """Devolucion multiple de agente a almacen."""
+    agent_user_id = request.form.get('agent_user_id', type=int)
+    items_json = request.form.get('items', '[]')
+    notes = request.form.get('notes', '').strip()
+
+    if not agent_user_id:
+        flash('Selecciona un agente.', 'error')
+        return redirect(url_for('inventory.index'))
+
+    try:
+        items = json.loads(items_json)
+    except (json.JSONDecodeError, TypeError):
+        flash('Datos invalidos.', 'error')
+        return redirect(url_for('inventory.index'))
+
+    if not items:
+        flash('Agrega al menos un producto.', 'error')
+        return redirect(url_for('inventory.index'))
+
+    warehouse = inv.get_warehouse()
+    agent_location = inv.get_agent_location(agent_user_id)
+    if not agent_location:
+        flash('El agente no tiene ubicacion de inventario.', 'error')
+        return redirect(url_for('inventory.index'))
+
+    try:
+        count = inv.batch_return(
+            items=items,
+            agent_location_id=agent_location.id,
+            warehouse_id=warehouse.id,
+            performed_by=current_user.id,
+            notes=notes or None,
+        )
+        agent = db.session.get(User, agent_user_id)
+        flash(f'{count} producto(s) devueltos por {agent.full_name}.', 'success')
+    except inv.InsufficientStockError as e:
+        flash(str(e), 'error')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'error')
+
+    return redirect(url_for('inventory.index'))

@@ -227,6 +227,164 @@ def adjust_stock(product_id, location_id, new_quantity, performed_by, notes=None
     return item
 
 
+def batch_purchase(items, warehouse_id, performed_by, notes=None):
+    """Registrar compra multiple de productos.
+
+    Args:
+        items: Lista de dicts [{product_id, quantity}, ...]
+        warehouse_id: ID del almacen
+        performed_by: ID del usuario
+        notes: Notas opcionales
+    Returns:
+        Numero de items procesados
+    """
+    count = 0
+    for entry in items:
+        pid = entry.get('product_id')
+        qty = entry.get('quantity', 0)
+        if not pid or qty <= 0:
+            continue
+
+        item = _get_or_create_stock_item(warehouse_id, pid)
+        item.quantity += qty
+
+        _create_movement(
+            product_id=pid, quantity=qty,
+            movement_type='purchase',
+            to_location_id=warehouse_id,
+            reference_type='manual',
+            notes=notes,
+            performed_by=performed_by,
+        )
+        count += 1
+
+    if count > 0:
+        log_action(
+            'inventory.batch_purchase',
+            entity_type='warehouse',
+            entity_id=warehouse_id,
+            new_values={'items': len(items), 'processed': count},
+            user_id=performed_by,
+        )
+        db.session.commit()
+    return count
+
+
+def batch_dispatch(items, warehouse_id, agent_location_id, performed_by, notes=None):
+    """Surtir agente con multiples productos.
+
+    Args:
+        items: Lista de dicts [{product_id, quantity}, ...]
+    Raises:
+        InsufficientStockError si algun producto no tiene stock
+    """
+    # Validar todo antes de aplicar
+    for entry in items:
+        pid = entry.get('product_id')
+        qty = entry.get('quantity', 0)
+        if not pid or qty <= 0:
+            continue
+        wh_item = _get_or_create_stock_item(warehouse_id, pid)
+        if wh_item.quantity < qty:
+            product = Product.query.get(pid)
+            raise InsufficientStockError(
+                f'Stock insuficiente de "{product.name}". '
+                f'Disponible: {wh_item.quantity}, solicitado: {qty}'
+            )
+
+    count = 0
+    for entry in items:
+        pid = entry.get('product_id')
+        qty = entry.get('quantity', 0)
+        if not pid or qty <= 0:
+            continue
+
+        wh_item = _get_or_create_stock_item(warehouse_id, pid)
+        wh_item.quantity -= qty
+
+        agent_item = _get_or_create_stock_item(agent_location_id, pid)
+        agent_item.quantity += qty
+
+        _create_movement(
+            product_id=pid, quantity=qty,
+            movement_type='dispatch',
+            from_location_id=warehouse_id,
+            to_location_id=agent_location_id,
+            reference_type='manual',
+            notes=notes,
+            performed_by=performed_by,
+        )
+        count += 1
+
+    if count > 0:
+        log_action(
+            'inventory.batch_dispatch',
+            entity_type='warehouse',
+            entity_id=warehouse_id,
+            new_values={'agent_location': agent_location_id, 'items': count},
+            user_id=performed_by,
+        )
+        db.session.commit()
+    return count
+
+
+def batch_return(items, agent_location_id, warehouse_id, performed_by, notes=None):
+    """Devolucion multiple de agente a almacen.
+
+    Args:
+        items: Lista de dicts [{product_id, quantity}, ...]
+    Raises:
+        InsufficientStockError si el agente no tiene suficiente
+    """
+    for entry in items:
+        pid = entry.get('product_id')
+        qty = entry.get('quantity', 0)
+        if not pid or qty <= 0:
+            continue
+        agent_item = _get_or_create_stock_item(agent_location_id, pid)
+        if agent_item.quantity < qty:
+            product = Product.query.get(pid)
+            raise InsufficientStockError(
+                f'El agente no tiene suficiente "{product.name}". '
+                f'Tiene: {agent_item.quantity}, devuelve: {qty}'
+            )
+
+    count = 0
+    for entry in items:
+        pid = entry.get('product_id')
+        qty = entry.get('quantity', 0)
+        if not pid or qty <= 0:
+            continue
+
+        agent_item = _get_or_create_stock_item(agent_location_id, pid)
+        agent_item.quantity -= qty
+
+        wh_item = _get_or_create_stock_item(warehouse_id, pid)
+        wh_item.quantity += qty
+
+        _create_movement(
+            product_id=pid, quantity=qty,
+            movement_type='return_to_warehouse',
+            from_location_id=agent_location_id,
+            to_location_id=warehouse_id,
+            reference_type='manual',
+            notes=notes,
+            performed_by=performed_by,
+        )
+        count += 1
+
+    if count > 0:
+        log_action(
+            'inventory.batch_return',
+            entity_type='warehouse',
+            entity_id=warehouse_id,
+            new_values={'agent_location': agent_location_id, 'items': count},
+            user_id=performed_by,
+        )
+        db.session.commit()
+    return count
+
+
 def deduct_for_sale(product_id, quantity, agent_location_id, sale_id, performed_by):
     """Descontar stock del agente por una venta. Llamado desde sale_service."""
     agent_item = _get_or_create_stock_item(agent_location_id, product_id)

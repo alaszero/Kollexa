@@ -5,20 +5,14 @@
 <div class="space-y-6">
     <h1 class="text-2xl font-bold text-gray-800">Movimientos de Inventario</h1>
 
-    <!-- Navegación inventario -->
+    <!-- Navegacion inventario -->
     <div class="flex gap-2">
         <a href="{{ url_for('inventory.index') }}"
-           class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition">
-            Almacén
-        </a>
+           class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition">Almacen</a>
         <a href="{{ url_for('inventory.agents_stock') }}"
-           class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition">
-            Stock Agentes
-        </a>
+           class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition">Stock Agentes</a>
         <a href="{{ url_for('inventory.movements') }}"
-           class="bg-primary-100 text-primary-800 px-4 py-2 rounded-lg font-medium">
-            Movimientos
-        </a>
+           class="bg-primary-100 text-primary-800 px-4 py-2 rounded-lg font-medium">Movimientos</a>
     </div>
 
     <!-- Lista de movimientos -->
@@ -27,36 +21,54 @@
         <div class="bg-white rounded-xl shadow p-4">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div class="flex items-center gap-3">
-                    <!-- Icono por tipo -->
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg
-                        {% if m.movement_type == 'purchase' %}bg-green-500
-                        {% elif m.movement_type == 'dispatch' %}bg-blue-500
-                        {% elif m.movement_type == 'return_to_warehouse' %}bg-yellow-500
-                        {% elif m.movement_type in ('sale', 'sale_direct') %}bg-purple-500
-                        {% elif m.movement_type == 'adjustment_in' %}bg-teal-500
-                        {% elif m.movement_type == 'adjustment_out' %}bg-red-500
-                        {% else %}bg-gray-500{% endif %}">
-                        {% if m.movement_type == 'purchase' %}+
-                        {% elif m.movement_type == 'dispatch' %}&#8594;
-                        {% elif m.movement_type == 'return_to_warehouse' %}&#8592;
-                        {% elif m.movement_type in ('sale', 'sale_direct') %}$
-                        {% elif m.movement_type == 'adjustment_in' %}&#8593;
-                        {% elif m.movement_type == 'adjustment_out' %}&#8595;
-                        {% else %}?{% endif %}
-                    </div>
+                    <!-- Badge grande de tipo -->
+                    {% if m.movement_type == 'purchase' %}
+                    <span class="inline-flex items-center gap-1 bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Entrada
+                    </span>
+                    {% elif m.movement_type == 'dispatch' %}
+                    <span class="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                        Despacho
+                    </span>
+                    {% elif m.movement_type == 'return_to_warehouse' %}
+                    <span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18"/></svg>
+                        Devolucion
+                    </span>
+                    {% elif m.movement_type in ('sale', 'sale_direct') %}
+                    <span class="inline-flex items-center gap-1 bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Venta
+                    </span>
+                    {% elif m.movement_type == 'adjustment_in' %}
+                    <span class="inline-flex items-center gap-1 bg-teal-100 text-teal-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                        Ajuste +
+                    </span>
+                    {% elif m.movement_type == 'adjustment_out' %}
+                    <span class="inline-flex items-center gap-1 bg-red-100 text-red-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                        Ajuste -
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full uppercase">
+                        {{ m.movement_type }}
+                    </span>
+                    {% endif %}
+
                     <div>
                         <p class="font-medium text-gray-800">
                             {{ m.product.name if m.product else 'Producto eliminado' }}
                             <span class="text-primary-600 font-bold">&times;{{ m.quantity }}</span>
                         </p>
                         <p class="text-sm text-gray-500">
-                            {% if m.movement_type == 'purchase' %}Compra / Entrada
-                            {% elif m.movement_type == 'dispatch' %}Surtido a {{ m.to_location.name if m.to_location else '?' }}
-                            {% elif m.movement_type == 'return_to_warehouse' %}Devolución de {{ m.from_location.name if m.from_location else '?' }}
-                            {% elif m.movement_type == 'sale' %}Venta
-                            {% elif m.movement_type == 'adjustment_in' %}Ajuste (+)
-                            {% elif m.movement_type == 'adjustment_out' %}Ajuste (-)
-                            {% else %}{{ m.movement_type }}{% endif %}
+                            {% if m.movement_type == 'dispatch' %}
+                                &rarr; {{ m.to_location.name if m.to_location else '?' }}
+                            {% elif m.movement_type == 'return_to_warehouse' %}
+                                &larr; {{ m.from_location.name if m.from_location else '?' }}
+                            {% endif %}
                         </p>
                     </div>
                 </div>
