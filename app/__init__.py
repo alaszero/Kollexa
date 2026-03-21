@@ -59,6 +59,7 @@ def _register_blueprints(app):
     from app.web.sales import sales_bp
     from app.web.collections import collections_bp
     from app.web.portal import portal_bp
+    from app.web.users import users_bp
 
     app.register_blueprint(api_bp, url_prefix='/api/v1')
     app.register_blueprint(web_bp)
@@ -69,6 +70,7 @@ def _register_blueprints(app):
     app.register_blueprint(sales_bp)
     app.register_blueprint(collections_bp)
     app.register_blueprint(portal_bp)
+    app.register_blueprint(users_bp)
 
 
 def _register_jinja_helpers(app):

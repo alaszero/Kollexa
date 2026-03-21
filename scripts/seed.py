@@ -98,6 +98,10 @@ SYSTEM_ROLES = {
             'dashboard.view',
         ],
     },
+    'support': {
+        'description': 'Soporte tecnico remoto - acceso total + auditoria',
+        'permissions': '__all__',
+    },
 }
 
 
