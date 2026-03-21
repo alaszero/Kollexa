@@ -66,6 +66,10 @@
                         <a href="{{ url_for('collections.index') }}"
                            class="px-3 py-2 rounded-lg text-sm hover:bg-primary-600 transition">Cobranza</a>
                         {% endif %}
+                        {% if current_user.has_permission('collections.view_all') or current_user.has_role('superadmin') %}
+                        <a href="{{ url_for('settlements.index') }}"
+                           class="px-3 py-2 rounded-lg text-sm hover:bg-primary-600 transition">Liquidaciones</a>
+                        {% endif %}
                         {% if current_user.has_permission('users.view') or current_user.has_role('superadmin') %}
                         <a href="{{ url_for('users.index') }}"
                            class="px-3 py-2 rounded-lg text-sm hover:bg-primary-600 transition">Usuarios</a>
@@ -126,6 +130,10 @@
                 {% if current_user.has_permission('collections.view') or current_user.has_role('superadmin') %}
                 <a href="{{ url_for('collections.index') }}"
                    class="block px-3 py-2 rounded hover:bg-primary-900 text-sm">Cobranza</a>
+                {% endif %}
+                {% if current_user.has_permission('collections.view_all') or current_user.has_role('superadmin') %}
+                <a href="{{ url_for('settlements.index') }}"
+                   class="block px-3 py-2 rounded hover:bg-primary-900 text-sm">Liquidaciones</a>
                 {% endif %}
                 {% if current_user.has_permission('users.view') or current_user.has_role('superadmin') %}
                 <a href="{{ url_for('users.index') }}"

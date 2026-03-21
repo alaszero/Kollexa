@@ -28,6 +28,7 @@ def get_dashboard_data(user=None):
         'top_products': _get_top_products(user_id=user.id if is_agent else None),
         'recent_payments': _get_recent_payments(user_id=user.id if is_agent else None),
         'agents_summary': [] if is_agent else _get_agents_summary(today),
+        'in_transit': _get_in_transit_total() if not is_agent else 0,
         'is_agent': is_agent,
     }
     return data
@@ -117,6 +118,21 @@ def _get_kpis(today, user_id=None):
         'overdue_count': overdue_count,
         'total_customers': total_customers,
     }
+
+
+def _get_in_transit_total():
+    """Total de dinero cobrado pero no liquidado (en transito)."""
+    from app.models.settlement import SettlementDetail
+    settled_ids = db.session.query(
+        SettlementDetail.payment_id
+    ).subquery()
+
+    total = db.session.query(
+        func.coalesce(func.sum(Payment.amount), 0)
+    ).filter(
+        ~Payment.id.in_(db.session.query(settled_ids.c.payment_id)),
+    ).scalar()
+    return total
 
 
 def _get_top_products(limit=5, user_id=None):

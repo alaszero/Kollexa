@@ -6,6 +6,7 @@ from app.models.inventory import StockLocation, StockItem, InventoryMovement
 from app.models.sale import Sale, SaleDetail
 from app.models.payment import PaymentPlan, PaymentInstallment, Payment
 from app.models.system import SystemConfig, AuditLog, SystemVersion
+from app.models.settlement import AgentSettlement, SettlementDetail
 
 __all__ = [
     'User', 'Role', 'Permission', 'user_roles', 'role_permissions',
@@ -15,4 +16,5 @@ __all__ = [
     'Sale', 'SaleDetail',
     'PaymentPlan', 'PaymentInstallment', 'Payment',
     'SystemConfig', 'AuditLog', 'SystemVersion',
+    'AgentSettlement', 'SettlementDetail',
 ]

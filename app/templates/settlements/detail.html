@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Liquidacion #{{ settlement.id }} - Kollexa{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center gap-4">
+        <a href="{{ url_for('settlements.index') }}"
+           class="bg-gray-200 hover:bg-gray-300 p-3 rounded-xl transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+        </a>
+        <div class="flex-1">
+            <h1 class="text-2xl font-bold text-gray-800">Liquidacion #{{ settlement.id }}</h1>
+            <p class="text-sm text-gray-500">{{ settlement.agent.full_name }} &middot; {{ settlement.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+        {% if settlement.status == 'confirmed' %}
+        <span class="bg-green-100 text-green-700 text-sm font-bold px-4 py-2 rounded-full">Confirmada</span>
+        {% else %}
+        <span class="bg-orange-100 text-orange-700 text-sm font-bold px-4 py-2 rounded-full">Pendiente</span>
+        {% endif %}
+    </div>
+
+    <!-- Resumen -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl shadow p-5 text-center">
+            <p class="text-xs text-gray-400 uppercase">Total</p>
+            <p class="text-3xl font-bold text-gray-800 mt-1">{{ settlement.total_amount|currency }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-5 text-center">
+            <p class="text-xs text-gray-400 uppercase">Pagos Incluidos</p>
+            <p class="text-3xl font-bold text-primary-600 mt-1">{{ settlement.payment_count }}</p>
+        </div>
+        <div class="bg-white rounded-xl shadow p-5 text-center">
+            {% if settlement.status == 'confirmed' %}
+            <p class="text-xs text-gray-400 uppercase">Confirmada por</p>
+            <p class="text-lg font-medium text-gray-800 mt-2">{{ settlement.confirmer.full_name if settlement.confirmer else '-' }}</p>
+            <p class="text-xs text-gray-400">{{ settlement.confirmed_at.strftime('%d/%m/%Y %H:%M') if settlement.confirmed_at else '' }}</p>
+            {% else %}
+            <p class="text-xs text-gray-400 uppercase">Accion</p>
+            <form method="POST" action="{{ url_for('settlements.confirm', settlement_id=settlement.id) }}" class="mt-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"
+                        class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition w-full"
+                        onclick="return confirm('Confirmar que recibiste {{ settlement.total_amount|currency }} de {{ settlement.agent.full_name }}?')">
+                    Confirmar Recibido
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Detalle de pagos -->
+    <h2 class="text-xl font-bold text-gray-700">Pagos Incluidos</h2>
+    <div class="bg-white rounded-xl shadow overflow-hidden">
+        <table class="w-full text-sm">
+            <thead class="bg-gray-50">
+                <tr class="text-left text-gray-500">
+                    <th class="px-4 py-3">Cliente</th>
+                    <th class="px-4 py-3">Venta</th>
+                    <th class="px-4 py-3">Cuota</th>
+                    <th class="px-4 py-3 text-right">Monto</th>
+                    <th class="px-4 py-3">Fecha Cobro</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in details %}
+                {% set p = d.payment %}
+                {% set inst = p.installment %}
+                {% set sale = inst.plan.sale %}
+                <tr class="border-t border-gray-100">
+                    <td class="px-4 py-3 font-medium text-gray-800">{{ sale.customer.full_name }}</td>
+                    <td class="px-4 py-3 text-gray-500">#{{ sale.id }}</td>
+                    <td class="px-4 py-3 text-gray-500">{{ inst.installment_num }}/{{ inst.plan.num_installments }}</td>
+                    <td class="px-4 py-3 text-right font-bold text-green-600">{{ p.amount|currency }}</td>
+                    <td class="px-4 py-3 text-gray-500">{{ p.payment_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="bg-gray-50">
+                <tr>
+                    <td colspan="3" class="px-4 py-3 font-bold text-gray-700 text-right">Total:</td>
+                    <td class="px-4 py-3 text-right font-bold text-gray-800 text-lg">{{ settlement.total_amount|currency }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

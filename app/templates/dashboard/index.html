@@ -9,7 +9,7 @@
     </div>
 
     <!-- KPIs principales -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div class="bg-white rounded-xl shadow p-5">
             <p class="text-xs text-gray-500 uppercase tracking-wide">Ventas Activas</p>
             <p class="text-3xl font-bold text-primary-700 mt-1">{{ kpis.active_sales }}</p>
@@ -30,6 +30,15 @@
             <p class="text-3xl font-bold text-red-600 mt-1">{{ kpis.overdue_count }}</p>
             <p class="text-xs text-gray-400 mt-1">Vendido: {{ kpis.total_sold|currency }}</p>
         </div>
+        {% if not is_agent %}
+        <div class="bg-white rounded-xl shadow p-5">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">En Transito</p>
+            <p class="text-3xl font-bold text-orange-600 mt-1">{{ in_transit|currency }}</p>
+            <p class="text-xs text-gray-400 mt-1">
+                <a href="{{ url_for('settlements.index') }}" class="text-primary-600 hover:underline">Ver liquidaciones</a>
+            </p>
+        </div>
+        {% endif %}
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
