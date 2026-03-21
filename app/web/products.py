@@ -14,6 +14,8 @@ def index():
     search = request.args.get('search', '').strip()
     category = request.args.get('category', '').strip()
 
+    view = request.args.get('view', 'grid')
+
     query = ps.get_products_query(
         search=search or None,
         category=category or None,
@@ -22,12 +24,10 @@ def index():
     products = query.all()
     categories = ps.get_categories()
 
-    # Si es request HTMX, devolver solo la tabla
-    if request.headers.get('HX-Request'):
-        return render_template(
-            'products/_table.html',
-            products=products,
-        )
+    # Obtener unidades vendidas y stock para cada producto
+    product_ids = [p.id for p in products]
+    units_sold = ps.get_units_sold(product_ids) if product_ids else {}
+    stock = ps.get_product_stock(product_ids) if product_ids else {}
 
     return render_template(
         'products/index.html',
@@ -35,6 +35,9 @@ def index():
         categories=categories,
         search=search,
         current_category=category,
+        units_sold=units_sold,
+        stock=stock,
+        view=view,
     )
 
 
@@ -52,8 +55,8 @@ def create():
             'category': request.form.get('category', '').strip() or None,
         }
 
-        if not data['name'] or not data['base_price'] or not data['sell_price']:
-            flash('Nombre, precio base y precio venta son requeridos.', 'error')
+        if not data['sku'] or not data['name'] or not data['base_price'] or not data['sell_price']:
+            flash('SKU, nombre, precio base y precio venta son requeridos.', 'error')
             return render_template('products/form.html', product=None, data=data,
                                    categories=ps.get_categories())
 
@@ -87,8 +90,8 @@ def edit(product_id):
             'category': request.form.get('category', '').strip() or None,
         }
 
-        if not data['name'] or not data['base_price'] or not data['sell_price']:
-            flash('Nombre, precio base y precio venta son requeridos.', 'error')
+        if not data['sku'] or not data['name'] or not data['base_price'] or not data['sell_price']:
+            flash('SKU, nombre, precio base y precio venta son requeridos.', 'error')
             return render_template('products/form.html', product=product, data=data,
                                    categories=ps.get_categories())
 

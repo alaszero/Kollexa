@@ -22,9 +22,9 @@
             <!-- SKU -->
             <div>
                 <label for="sku" class="block text-sm font-medium text-gray-700 mb-1">
-                    SKU <span class="text-gray-400">(opcional)</span>
+                    SKU *
                 </label>
-                <input type="text" id="sku" name="sku"
+                <input type="text" id="sku" name="sku" required
                        value="{{ data.get('sku') or (product.sku if product else '') or '' }}"
                        placeholder="Ej: SART-001"
                        class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
@@ -38,38 +38,36 @@
                 </label>
                 <input type="text" id="name" name="name" required
                        value="{{ data.get('name') or (product.name if product else '') or '' }}"
-                       placeholder="Ej: Sartén T-Fal 30cm"
+                       placeholder="Ej: Sarten T-Fal 30cm"
                        class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
                               focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
             </div>
 
-            <!-- Descripción -->
+            <!-- Descripcion -->
             <div>
                 <label for="description" class="block text-sm font-medium text-gray-700 mb-1">
-                    Descripción <span class="text-gray-400">(opcional)</span>
+                    Descripcion <span class="text-gray-400">(opcional)</span>
                 </label>
                 <textarea id="description" name="description" rows="3"
-                          placeholder="Descripción breve del producto..."
+                          placeholder="Descripcion breve del producto..."
                           class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
                                  focus:ring-2 focus:ring-primary-500 focus:border-primary-500">{{ data.get('description') or (product.description if product else '') or '' }}</textarea>
             </div>
 
-            <!-- Categoría -->
+            <!-- Categoria -->
             <div>
                 <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
-                    Categoría <span class="text-gray-400">(opcional)</span>
+                    Categoria *
                 </label>
-                <input type="text" id="category" name="category"
-                       value="{{ data.get('category') or (product.category if product else '') or '' }}"
-                       list="categories_list"
-                       placeholder="Ej: Cocina, Hogar, Limpieza"
-                       class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg
-                              focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                <datalist id="categories_list">
+                <select id="category" name="category" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl text-lg bg-white
+                               focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Seleccionar categoria...</option>
+                    {% set current_cat = data.get('category') or (product.category if product else '') or '' %}
                     {% for cat in categories %}
-                    <option value="{{ cat }}">
+                    <option value="{{ cat }}" {% if cat == current_cat %}selected{% endif %}>{{ cat }}</option>
                     {% endfor %}
-                </datalist>
+                </select>
             </div>
 
             <!-- Precios -->

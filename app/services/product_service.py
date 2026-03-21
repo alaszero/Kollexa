@@ -1,7 +1,23 @@
 """Servicio de productos."""
+from sqlalchemy import func
 from app.extensions import db
 from app.models.product import Product
+from app.models.sale import Sale, SaleDetail
 from app.utils.audit import log_action
+
+
+# Categorías predefinidas del sistema
+PRODUCT_CATEGORIES = [
+    'Cocina',
+    'Electrodomesticos',
+    'Hogar',
+    'Limpieza',
+    'Cuidado Personal',
+    'Ropa de Cama',
+    'Herramientas',
+    'Tecnologia',
+    'Otros',
+]
 
 
 def create_product(data, user_id=None):
@@ -92,9 +108,48 @@ def get_products_query(search=None, category=None, active_only=True):
 
 
 def get_categories():
-    """Obtener lista de categorías únicas."""
-    results = db.session.query(Product.category).filter(
-        Product.category.isnot(None),
-        Product.is_active == True
-    ).distinct().order_by(Product.category).all()
-    return [r[0] for r in results if r[0]]
+    """Obtener lista de categorías predefinidas."""
+    return PRODUCT_CATEGORIES
+
+
+def get_units_sold(product_ids=None):
+    """Obtener unidades vendidas por producto.
+
+    Args:
+        product_ids: Lista de IDs (None = todos)
+
+    Returns:
+        Dict {product_id: units_sold}
+    """
+    query = db.session.query(
+        SaleDetail.product_id,
+        func.coalesce(func.sum(SaleDetail.quantity), 0).label('units')
+    ).join(Sale, SaleDetail.sale_id == Sale.id).filter(
+        Sale.status.in_(['active', 'completed']),
+    )
+
+    if product_ids:
+        query = query.filter(SaleDetail.product_id.in_(product_ids))
+
+    results = query.group_by(SaleDetail.product_id).all()
+    return {r[0]: int(r[1]) for r in results}
+
+
+def get_product_stock(product_ids=None):
+    """Obtener stock total por producto (todas las ubicaciones).
+
+    Args:
+        product_ids: Lista de IDs (None = todos)
+
+    Returns:
+        Dict {product_id: total_stock}
+    """
+    from app.models.inventory import StockItem
+    query = db.session.query(
+        StockItem.product_id,
+        func.coalesce(func.sum(StockItem.quantity), 0).label('stock')
+    )
+    if product_ids:
+        query = query.filter(StockItem.product_id.in_(product_ids))
+    results = query.group_by(StockItem.product_id).all()
+    return {r[0]: int(r[1]) for r in results}
