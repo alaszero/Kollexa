@@ -49,6 +49,52 @@ def paginated_response(query, page, per_page):
     }
 
 
+def normalize_phone_mx(phone):
+    """Normalizar teléfono mexicano a formato internacional para WhatsApp.
+
+    Ejemplos:
+        '55-1234-5678'  → '5215512345678'
+        '5512345678'    → '5215512345678'
+        '+525512345678' → '525512345678'
+        '045512345678'  → '5215512345678'
+    """
+    if not phone:
+        return None
+    # Limpiar: solo dígitos
+    import re
+    digits = re.sub(r'[^\d]', '', phone)
+
+    # Quitar prefijo 0 o 044/045
+    if digits.startswith('044') or digits.startswith('045'):
+        digits = digits[3:]
+    elif digits.startswith('0'):
+        digits = digits[1:]
+
+    # Quitar prefijo de país si ya lo tiene
+    if digits.startswith('521') and len(digits) == 13:
+        return digits
+    if digits.startswith('52') and len(digits) == 12:
+        # Agregar 1 para WhatsApp móvil
+        return '52' + '1' + digits[2:]
+
+    # Solo 10 dígitos (número local)
+    if len(digits) == 10:
+        return '521' + digits
+
+    # Si no encaja, devolver los dígitos como están
+    return digits
+
+
+def whatsapp_url(phone, message=''):
+    """Generar URL de WhatsApp con mensaje pre-rellenado."""
+    normalized = normalize_phone_mx(phone)
+    if not normalized:
+        return None
+    import urllib.parse
+    msg = urllib.parse.quote(message)
+    return f'https://wa.me/{normalized}?text={msg}'
+
+
 def get_client_ip():
     """Obtener IP del cliente (compatible con Cloudflare Tunnel)."""
     # Cloudflare envía la IP real en CF-Connecting-IP

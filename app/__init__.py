@@ -73,9 +73,10 @@ def _register_blueprints(app):
 
 def _register_jinja_helpers(app):
     """Registrar filtros y funciones globales en Jinja2."""
-    from app.utils.helpers import format_currency
+    from app.utils.helpers import format_currency, whatsapp_url
 
     app.jinja_env.filters['currency'] = format_currency
+    app.jinja_env.globals['whatsapp_url'] = whatsapp_url
 
 
 def _register_error_handlers(app):
